@@ -1,299 +1,211 @@
-📅 Project: StreamFit Grails 6.2.3 Application on AWS
+# StreamFit AWS Deployment
 
-Date: January 17, 2026
-Duration: ~4 hours
-Status: ✅ Production-Ready (pending domain/HTTPS)
+## Project Overview
+Deployment of the StreamFit Grails 6.2.3 application on AWS using Apache reverse proxy, Tomcat application server, MySQL database, and Redis caching.
 
-🏗️ INFRASTRUCTURE SETUP
+Deployment Date: January 17, 2026  
+Status: Production Ready (Domain & HTTPS pending)
 
-AWS Configuration:
+---
 
-✅ EC2 Instance: t2.micro (1GB RAM, 8GB storage)
+# Infrastructure Setup
 
-✅ OS: Ubuntu 22.04 LTS
+## AWS Configuration
+- EC2 Instance: t2.micro
+- OS: Ubuntu 22.04 LTS
+- Region: us-east-1
+- Public IP: 35.171.92.14
 
-✅ Region: us-east-1
+Security Group:
+- SSH (22)
+- HTTP (80)
+- HTTPS (443)
 
-✅ Public IP: 35.171.92.14
+---
 
-✅ Security Group configured (SSH, HTTP, HTTPS)
+# Technology Stack
 
-Software Stack Installed:
+Application Layer
+- Grails 6.2.3
+- Java 21
 
-✅ Java 21 (OpenJDK)
+Web Layer
+- Apache 2.4 Reverse Proxy
+- Tomcat 9.0.58
 
-✅ Tomcat 9.0.58
+Data Layer
+- MySQL 8.0
+- Redis 6.2
 
-✅ Apache 2.4 (reverse proxy)
+Monitoring
+- glances
+- htop
+- lnav
 
-✅ MySQL 8.0.44
+---
 
-✅ Redis 6.2 (caching)
+# Architecture
 
-✅ Monitoring tools (glances, htop, lnav)
+Client  
+↓  
+Apache Reverse Proxy  
+↓  
+Tomcat (Grails Application)  
+↓  
+MySQL Database  
+↓  
+Redis Cache  
 
-🐛 CRITICAL BUGS FIXED
+---
 
-1. Application Bugs (6 major fixes):
+# Deployment Configuration
 
-A. Bootstrap.groovy Issue:
+## Database
+Database: wsldna  
+User: streamfit  
 
-❌ Problem: Old bootstrap tried to drop/recreate tables on every restart (dangerous!)
+Tables:
+- streamfit_user
+- game_questions
+- game_options
 
-✅ Fixed: Simplified to just verify tables exist
+Data:
+58 game questions loaded.
 
-B. API Endpoint 404 Errors:
+---
 
-❌ Problem: Missing /streamfit context path in API calls
+## Apache Reverse Proxy
 
-✅ Fixed: Added API_BASE to all fetch() calls in: 
+Port 80 → proxies to Tomcat (localhost:8080)
 
-personality/start.gsp (6 locations)
+Features enabled:
 
-result/resultPage.gsp (3 locations)
+- Security headers
+- Gzip compression
+- Browser caching
 
-C. Result Page Redirect:
+---
 
-❌ Problem: After signup, redirected to /dashboard instead of /streamfit/dashboard
+## Tomcat Configuration
 
-✅ Fixed: Added API_BASE + to redirect URL
+Memory optimization:
 
-D. Authentication Flow:
+- Xms256m
+- Xmx512m
 
-❌ Problem: Tokens returned but not stored before redirect
+Security hardening:
 
-✅ Fixed: Already had authManager.storeAuthData() - just fixed redirect URL
+- Default apps removed
+- Tomcat port 8080 not exposed publicly
 
-E. Dashboard 404 Error:
+---
 
-❌ Problem: Dashboard requires authentication
+# Performance Optimizations
 
-✅ Fixed: Signup now properly stores tokens and logs user in
+- Gzip compression enabled
+- Browser caching (images: 1 year)
+- Redis caching for faster responses
+- JVM memory tuning for low-resource EC2 instance
 
-F. Static Assets 404s:
+---
 
-❌ Problem: CSS/JS files had wrong paths
+# Security
 
-✅ Fixed: Context path issues resolved by Apache config
+Firewall (UFW)
 
-🔧 DEPLOYMENT CONFIGURATION
+Allowed ports:
 
-1. Database Setup:
+- 22 SSH
+- 80 HTTP
+- 443 HTTPS
 
-✅ MySQL database: wsldna
+Security Measures
 
-✅ User: streamfit with proper permissions
+- Apache security headers
+- Database restricted to localhost
+- Tomcat not publicly exposed
 
-✅ Tables: 7 tables (streamfit_user, game_questions, game_options, etc.)
+---
 
-✅ Data: 58 game questions populated
+# Automation
 
-✅ Connection: Working via localhost
+## Deployment Script
 
-2. Apache Reverse Proxy:
+deploy.sh
 
-✅ Configured as proxy to Tomcat
+Functions:
+- Stop Tomcat
+- Backup current WAR
+- Deploy new WAR
+- Restart Tomcat
 
-✅ Port 80 proxies to localhost:8080
+Usage:
 
-✅ Security headers added
+./deploy.sh
 
-✅ Gzip compression enabled
+---
 
-✅ Browser caching configured
+## Backup Script
 
-3. Tomcat Configuration:
+Runs daily via cron.
 
-✅ Memory optimized: -Xms256m -Xmx512m
+Schedule:
+2:00 AM
 
-✅ Running on port 8080 (not exposed publicly)
+Location:
+`/home/ubuntu/backups/`
 
-✅ Default apps removed for security
+Retention:
+7 days
 
-4. Firewall (UFW):
+---
 
-✅ SSH (22): Allowed
+## Health Monitoring
 
-✅ HTTP (80): Allowed from anywhere
+Runs every 5 minutes via cron.
 
-✅ HTTPS (443): Allowed (for future)
+Log file:
 
-✅ Port 8080: Not exposed (internal only)
+`/home/ubuntu/health-check.log`
 
-🚀 PERFORMANCE OPTIMIZATIONS
+---
 
-✅ Gzip Compression: Reduces page size by 60-80%
+# Application URLs
 
-✅ Browser Caching: Images cached 1 year, CSS/JS 1 month
+Public
 
-✅ Redis Caching: 13 keys cached, improving response time
+http://35.171.92.14/streamfit/personality/start
 
-✅ Memory Tuning: Optimized JVM settings for 1GB RAM
+Dashboard
 
-🔒 SECURITY IMPLEMENTATIONS
+http://35.171.92.14/streamfit/dashboard
 
-✅ Firewall Active: UFW blocking unnecessary ports
+Health Check
 
-✅ Apache Security Headers: 
+http://35.171.92.14/streamfit/health
 
-X-Frame-Options: SAMEORIGIN
+---
 
-X-Content-Type-Options: nosniff
+# Monitoring Tools
 
-X-XSS-Protection: enabled
+- glances
+- htop
+- lnav
+- redis-cli stats
 
-✅ Tomcat Hardening: Default apps removed
+---
 
-✅ Database: Local access only (not exposed)
+# Known Issues / Improvements
 
-✅ Port 8080: Not publicly accessible
+Before production release:
 
-📊 MONITORING & MAINTENANCE
+- Change JWT secret
+- Update MySQL password
+- Configure domain name
+- Enable HTTPS using Let's Encrypt
 
-Automated Tasks:
+Future improvements:
 
-✅ Daily Backups: Every day at 2 AM 
-
-Location: /home/ubuntu/backups/
-
-Retention: 7 days
-
-Verified working ✅
-
-✅ Health Monitoring: Every 5 minutes 
-
-Checks if app is responding
-
-Logs to: /home/ubuntu/health-check.log
-
-✅ Log Rotation: Daily rotation of Tomcat logs 
-
-Prevents disk from filling up
-
-Keeps 7 days of logs
-
-Monitoring Tools:
-
-✅ glances: Real-time system monitoring
-
-✅ htop: Process monitoring
-
-✅ lnav: Beautiful log viewer
-
-✅ Redis monitoring: Stats and key counts
-
-🛠️ AUTOMATION SCRIPTS
-
-1. Deployment Script (./deploy.sh):
-
-bash
-
-- Stops Tomcat - Backs up current WAR - Removes old deployment - Deploys new WAR - Starts Tomcat - Verifies deployment
-
-Usage: ./deploy.sh
-
-2. Health Check Script:
-
-Runs every 5 minutes via cron
-
-Checks if app responds
-
-Logs status
-
-3. Backup Script:
-
-Runs daily at 2 AM via cron
-
-Backs up MySQL database
-
-Keeps last 7 days
-
-📝 DOCUMENTATION CREATED
-
-✅ Complete deployment documentation: /home/ubuntu/DEPLOYMENT_INFO.md
-
-Includes:
-
-Server details
-
-All commands
-
-Troubleshooting guide
-
-Service management
-
-Contact information
-
-🌐 APPLICATION URLS
-
-Public Access:
-
-Main: http://35.171.92.14/streamfit/personality/start
-
-Dashboard: http://35.171.92.14/streamfit/dashboard
-
-Health: http://35.171.92.14/streamfit/health
-
-Internal (not exposed):
-
-Tomcat: http://localhost:8080/streamfit/
-
-MySQL: localhost:3306
-
-Redis: localhost:6379
-
-✅ WHAT'S WORKING
-
-✅ Complete test flow (choose game → answer questions → see results)
-
-✅ User signup/login
-
-✅ Dashboard access
-
-✅ All 9 game types working
-
-✅ Redis caching
-
-✅ MySQL database
-
-✅ Responsive on mobile devices
-
-✅ Accessible from anywhere (not just your IP)
-
-⚠️ PENDING (Before Production)
-
-Critical (Must Do):
-
-⚠️ Change JWT Secret (currently public) 
-
-Location: application.yml line 100
-
-Generate: openssl rand -base64 32
-
-⚠️ Change MySQL Password (currently "StrongPasswordHere") 
-
-Update in MySQL
-
-Update in application.yml
-
-⚠️ Get Domain Name ($1-12/year) 
-
-Point to: 35.171.92.14
-
-Required for HTTPS
-
-⚠️ Setup HTTPS/SSL (after domain) 
-
-Use Let's Encrypt (free)
-
-Command: sudo certbot --apache -d yourdomain.com
-
-Recommended (When Ready):
-
-⏳ Update CORS to use domain instead of IP
-
-⏳ Consider upgrading to t2.small if traffic increases
-
-⏳ Setup email notifications (SendGrid, AWS SES)
-
-⏳ Add error tracking (Sentry)
+- Setup email notifications
+- Upgrade instance if traffic increases
+- Add error tracking (Sentry)
